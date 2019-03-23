@@ -1,45 +1,69 @@
 from __future__ import unicode_literals
-import youtube_dl
+from bs4 import BeautifulSoup as bs
+import os, cv2, youtube_dl, requests
 import moviepy.editor as mp
-import os
-import cv2
 
 
-def split_into_frames(url, height, frameskip, subfolder):
+
+def get_search(qstring, results):
+
+    base = "https://www.youtube.com/results?search_query="
+    r = requests.get(base + qstring)
+
+    page = r.text
+    soup = bs(page, 'html.parser')
+
+    vids = soup.findAll('a', attrs={'class': 'yt-uix-tile-link'})
+
+    videolist = []
+    for v in vids:
+        tmp = 'https://www.youtube.com' + v['href']
+        videolist.append(tmp)
+    return videolist[0:results]
+
+
+def split_into_frames(url, height, frameskip):
 
     # Change directory to ./video/
     os.chdir("video")
 
-    # Download video
+    # Download videos
     opts = {'format': 'mp4',
             'outtmpl': '%(id)s.mp4'}
 
     with youtube_dl.YoutubeDL(opts) as ydl:
-        info_dict = ydl.extract_info(url)
-        video_id = info_dict.get("id", None) + '.mp4'
+        info_dict = []
+        video_id = []
+        resized_name = []
+        for index, url in enumerate(url):
+            info_dict.append(ydl.extract_info(url))
+            print(info_dict[index])
+            video_id.append(info_dict[index].get("id", None) + '.mp4')
 
-    clip = mp.VideoFileClip(video_id)
-    clip_resized = clip.resize(height=height)
-    clip_resized.write_videofile(video_id + '-resized.mp4')
-    resized_name = video_id + '-resized.mp4'
+    for index, vid in enumerate(video_id):
+        clip = mp.VideoFileClip(video_id[index])
+        clip_resized = clip.resize(height=height)
+        clip_resized.write_videofile(video_id[index] + '-resized.mp4')
+        resized_name.append(video_id[index] + '-resized.mp4')
 
-    # Split into frames
-    cap = cv2.VideoCapture(resized_name)
+        # Split into frames
+        print("Splitting into frames...")
+        cap = cv2.VideoCapture(resized_name[index])
 
-    try:
-        if not os.path.exists(str(subfolder)):
-            os.makedirs(str(subfolder))
-    except OSError:
-        print('Error: Creating directory of data')
+        try:
+            if not os.path.exists(video_id[index]):
+                os.makedirs(video_id[index])
+        except OSError:
+            print('Error: Creating directory of data')
 
-    current_frame = 0
-    while True:
+        current_frame = 0
+        while True:
 
-        ret, frame = cap.read()
-        if not ret:
-            break
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        name = './' + str(subfolder) + '/' + str(int(current_frame/frameskip))
-        cv2.imwrite(name + '.jpg', frame)
+            name = './' + str(video_id[index]) + '/' + str(int(current_frame/frameskip))
+            cv2.imwrite(name + '.jpg', frame)
 
-        current_frame += frameskip
+            current_frame += frameskip
