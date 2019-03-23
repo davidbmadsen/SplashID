@@ -41,29 +41,34 @@ def split_into_frames(url, height, frameskip):
             video_id.append(info_dict[index].get("id", None) + '.mp4')
 
     for index, vid in enumerate(video_id):
+        # Resize clip
         clip = mp.VideoFileClip(video_id[index])
         clip_resized = clip.resize(height=height)
-        clip_resized.write_videofile(video_id[index] + '-resized.mp4')
-        resized_name.append(video_id[index] + '-resized.mp4')
+        clip_resized.write_videofile(video_id[index][0:11] + '-resized.mp4')
+
+        resized_name = video_id[index][0:11] + '-resized.mp4'
+        print("Resized name: " + resized_name)
 
         # Split into frames
-        print("Splitting into frames...")
-        cap = cv2.VideoCapture(resized_name[index])
+        print("Splitting " + str(resized_name) + " into frames...")
 
+        # Capture video
+        cap = cv2.VideoCapture(resized_name)
+        print("skrra")
+        framedir = "frames_" + str(index)
         try:
-            if not os.path.exists(video_id[index]):
-                os.makedirs(video_id[index])
+           if not os.path.exists(framedir):
+                os.makedirs(framedir)
         except OSError:
             print('Error: Creating directory of data')
-
+        print("pom pom")
         current_frame = 0
         while True:
-
             ret, frame = cap.read()
             if not ret:
                 break
 
-            name = './' + str(video_id[index]) + '/' + str(int(current_frame/frameskip))
+            name = './' + framedir + '/' + str(int(current_frame/frameskip))
             cv2.imwrite(name + '.jpg', frame)
 
             current_frame += frameskip
