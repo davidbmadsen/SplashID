@@ -47,21 +47,20 @@ def split_into_frames(url, height, frameskip):
         clip_resized.write_videofile(video_id[index][0:11] + '-resized.mp4')
 
         resized_name = video_id[index][0:11] + '-resized.mp4'
-        print("Resized name: " + resized_name)
 
-        # Split into frames
         print("Splitting " + str(resized_name) + " into frames...")
 
         # Capture video
         cap = cv2.VideoCapture(resized_name)
-        print("skrra")
         framedir = "frames_" + str(index)
+
         try:
            if not os.path.exists(framedir):
                 os.makedirs(framedir)
         except OSError:
             print('Error: Creating directory of data')
-        print("pom pom")
+
+        # Split capture into frames
         current_frame = 0
         while True:
             ret, frame = cap.read()

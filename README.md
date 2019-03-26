@@ -14,3 +14,9 @@ Further works:
 
 Ideas:
 - One frame a sec?
+
+#Sources
+YouTube search results script:
+https://allofyourbases.com/2017/10/08/web-scraping-youtube-in-python/
+
+Get frames:
