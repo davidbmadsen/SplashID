@@ -12,9 +12,9 @@ def compare_videos(show_plot=False):
     # Get all folders containing frames to compare
     dirs = list(filter(lambda x: os.path.isdir(x) and str.startswith(x, 'frames'), os.listdir('.')))
 
-    comparisons = []        # List of comparisons for one frame
-    all_comparisons = []    # List of all comparison arrays
 
+    all_comparisons = []    # List of all comparison arrays
+    firstframe = True
     # Create source frames list
     source_frames = os.listdir('source')
 
@@ -35,20 +35,38 @@ def compare_videos(show_plot=False):
         for frame in frames_int:
             frames.append(str(frame) + '.jpg')
 
-        # Compare all frames to all source frames
-        for source_frame in source_frames:
-            start_time = time.time()
-            print("Processing frame ", source_frame, " of ", str(len(source_frames)), "...")
+        comparisons = []  # List of comparisons for one frame
 
-            for frame in frames:
-                #print("Comparing frame " + source_frame + " to " + frame)
-                hash_from_frame = imagehash.phash(Image.open('./' + directory + '/' + frame), 8)
-                hash_from_source = imagehash.phash(Image.open('./source/' + source_frame), 8)
-                result = (hash_from_frame - hash_from_source)
+        # Compare all frames to all source frames -- This is what takes ages
+        source_hashes, frame_hashes = [], []
+        # Hash source frames
+        print("[Source frames] Hashing...")
+        for source_frame in source_frames:
+            hash_from_source = imagehash.phash(Image.open('./source/' + source_frame))
+            source_hashes.append(hash_from_source)
+        print("[Source frames] Done.")
+
+        # Hash video frames
+        print("[Video frames] Hashing...")
+        for frame in frames:
+            hash_from_frame = imagehash.phash(Image.open('./' + directory + '/' + frame))
+            frame_hashes.append(hash_from_frame)
+        print("[Video frames] Done.")
+
+        # Compare all source frames against all video frames
+        for i in range(len(source_hashes)):
+            start_time = time.time()
+            for j in range(len(frame_hashes)):
+                result = (source_hashes[i] - frame_hashes[j])
                 comparisons.append(result)
+
             all_comparisons.append(comparisons)     # Add to list of comparison vectors
             comparisons = []                        # Clear comparisons
-            print("[%s Elapsed]" % (time.time() - start_time))
+            print("Compared ", str(len(frame_hashes)), " frames in %s seconds" % round((time.time() - start_time), 3))
+
+            if firstframe:
+                print("Estimated time to complete: ", (len(frames)*len(source_frames))/round((time.time() - start_time), 3) % 60, " minutes")
+                firstframe = False
 
         # Multiply together results
         comparisons = np.array(all_comparisons[0])
