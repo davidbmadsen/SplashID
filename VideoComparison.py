@@ -3,6 +3,7 @@ import imagehash
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.signal import savgol_filter
 
 
 def hash_frames(directory):
@@ -18,7 +19,7 @@ def hash_frames(directory):
     frames = []
     for frame in frames_tmp:
         frames.append(str(frame) + '.jpg')
-    print("[Hash frames] Hashing...")
+    print("[Hash frames] Hashing", directory, "...")
 
     for frame in frames_list:
         hashed_image = imagehash.phash(Image.open('./' + directory + '/' + frame))
@@ -44,7 +45,7 @@ def compare_frames(source_hashes, frame_hashes):
     return all_comparisons
 
 
-def compare_videos(show_plot=False, scaling_factor=(1/5)):
+def compare_videos(show_plot=False, scaling_factor=(1/3)):
 
     os.chdir('video')
 
@@ -71,8 +72,10 @@ def compare_videos(show_plot=False, scaling_factor=(1/5)):
         for i in range(len(all_comparisons)):            # Goes through all comparison lists
             tmp = np.array(all_comparisons[i])
             comparisons = (comparisons * tmp) ** scaling_factor
+        yhat = savgol_filter(comparisons, 21, 5)
 
         if show_plot:
+            plt.plot(yhat)
             plt.plot(comparisons)
             plt.show()
 
