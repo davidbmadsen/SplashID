@@ -4,7 +4,6 @@ import os, cv2, youtube_dl, requests
 import moviepy.editor as mp
 
 
-
 def get_search(qstring, results):
 
     base = "https://www.youtube.com/results?search_query="
@@ -29,7 +28,8 @@ def split_into_frames(url, height, frameskip):
 
     # Download videos
     opts = {'format': 'mp4',
-            'outtmpl': '%(id)s.mp4'}
+            'outtmpl': '%(id)s.mp4',
+            'extractaudio': False}
 
     with youtube_dl.YoutubeDL(opts) as ydl:
         info_dict = []
@@ -55,7 +55,7 @@ def split_into_frames(url, height, frameskip):
         framedir = "frames_" + str(index)
 
         try:
-           if not os.path.exists(framedir):
+            if not os.path.exists(framedir):
                 os.makedirs(framedir)
         except OSError:
             print('Error: Creating directory of data')
