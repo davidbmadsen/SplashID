@@ -14,4 +14,4 @@ if __name__ == "__main__":
 
     vidurl = get_search('yee', 2)
     #vidurl = ['https://youtu.be/q6EoRBvdVPQ']
-    split_into_frames(vidurl, height, 30)
+    split_into_frames(vidurl, height)

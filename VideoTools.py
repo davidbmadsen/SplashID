@@ -21,7 +21,7 @@ def get_search(qstring, results):
     return videolist[0:results]
 
 
-def split_into_frames(url, height, frameskip):
+def split_into_frames(url, height):
 
     # Change directory to ./video/
     os.chdir("video")
@@ -34,20 +34,22 @@ def split_into_frames(url, height, frameskip):
     with youtube_dl.YoutubeDL(opts) as ydl:
         info_dict = []
         video_id = []
-        resized_name = []
         for index, url in enumerate(url):
             info_dict.append(ydl.extract_info(url))
-            print(info_dict[index])
             video_id.append(info_dict[index].get("id", None) + '.mp4')
 
     for index, vid in enumerate(video_id):
+        files = os.listdir('.')
+
+
         # Resize clip
-        clip = mp.VideoFileClip(video_id[index])
-        clip_resized = clip.resize(height=height)
-        clip_resized.write_videofile(video_id[index][0:11] + '-resized.mp4')
-
+        if resized_name not in files:
+            clip = mp.VideoFileClip(video_id[index])
+            clip_resized = clip.resize(height=height)
+            clip_resized.write_videofile(video_id[index][0:11] + '-resized.mp4')
+        else:
+            print("Resized video already exists.")
         resized_name = video_id[index][0:11] + '-resized.mp4'
-
         print("Splitting " + str(resized_name) + " into frames...")
 
         # Capture video
@@ -66,8 +68,10 @@ def split_into_frames(url, height, frameskip):
             ret, frame = cap.read()
             if not ret:
                 break
+            width = frame.shape[1]
+            x = int((width - height) / 2)
 
-            name = './' + framedir + '/' + str(int(current_frame/frameskip))
-            cv2.imwrite(name + '.jpg', frame)
+            name = './' + framedir + '/' + str(int(current_frame))
+            cv2.imwrite(name + '.jpg', frame[0:height, x:x + height])
 
-            current_frame += frameskip
+            current_frame += 1

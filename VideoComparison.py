@@ -3,10 +3,10 @@ import imagehash
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import savgol_filter
+import time
 
 
-def hash_frames(directory):
+def hash_frames(directory, hash_size=8):
     hash_list = []
     frames_list = os.listdir(directory)
     frames_tmp = []
@@ -19,23 +19,26 @@ def hash_frames(directory):
     frames = []
     for frame in frames_tmp:
         frames.append(str(frame) + '.jpg')
-    print("[Hash frames] Hashing", directory, "...")
+    print("[Hash frames] Hashing", directory, "with hash size", hash_size)
+    start_time = time.time()
 
+    # Hash frames in folder
     for frame in frames_list:
-        hashed_image = imagehash.phash(Image.open('./' + directory + '/' + frame))
+        hashed_image = imagehash.phash(Image.open('./' + directory + '/' + frame), hash_size)
         hash_list.append(hashed_image)
-    print("[Hash frames] Done.")
+    stop_time = time.time() - start_time
+    print("[Hash frames] Done.", "Elapsed time: ", round(stop_time, 3), "seconds")
 
     return hash_list
 
 
-def compare_frames(source_hashes, frame_hashes):
+def compare_frames(source_hashes, frame_hashes, hash_size):
     comparisons = []
     all_comparisons = []
     print("[Frame compare] Comparing frames...")
     for i in range(len(source_hashes)):
         for j in range(len(frame_hashes)):
-            result = (source_hashes[i] - frame_hashes[j])
+            result = round((source_hashes[i] - frame_hashes[j])*100/(hash_size ** 2), 3)
             comparisons.append(result)
 
         all_comparisons.append(comparisons)     # Add to list of comparison vectors
@@ -45,7 +48,7 @@ def compare_frames(source_hashes, frame_hashes):
     return all_comparisons
 
 
-def compare_videos(show_plot=False, scaling_factor=(1/3)):
+def compare_videos(show_plot=False,hash_size=8, scaling_factor=(1/4)):
 
     os.chdir('video')
 
@@ -53,30 +56,30 @@ def compare_videos(show_plot=False, scaling_factor=(1/3)):
     dirs = list(filter(lambda x: os.path.isdir(x) and str.startswith(x, 'frames'), os.listdir('.')))
 
     # Create source frames
-    source_hashes = hash_frames('source')
-    print(len(source_hashes))
+    source_hashes = hash_frames('source', hash_size)
 
     # Loop compares image in first directory with image in source directory
     for directory in dirs:
         print("[Video compare] Processing directory", directory)
 
         # Hash video frames
-        frame_hashes = hash_frames(directory)
+        frame_hashes = hash_frames(directory,hash_size)
 
         # Compare all source frames against all video frames
-        all_comparisons = compare_frames(source_hashes, frame_hashes)
+        all_comparisons = compare_frames(source_hashes, frame_hashes, hash_size)
 
-        # Multiply together results - np.array() used to simplify element-wise multiplication
-        comparisons = np.array(all_comparisons[0])
-
-        for i in range(len(all_comparisons)):            # Goes through all comparison lists
-            tmp = np.array(all_comparisons[i])
-            comparisons = (comparisons * tmp) ** scaling_factor
-        yhat = savgol_filter(comparisons, 21, 5)
+        # Find minimum value of each vector element in all subvectors
+        print("[Results] Getting minimum values...")
+        comparisons = np.array(all_comparisons)
+        for i in range(1, len(all_comparisons)):            # Goes through all comparison lists
+            comparisons = np.minimum(all_comparisons[i], all_comparisons[i-1])
+        print("[Results] Done.")
+        #for i in range(len(all_comparisons)):
+         #   comparisons *= all_comparisons[i]
 
         if show_plot:
-            plt.plot(yhat)
+            #plt.plot(yhat)
             plt.plot(comparisons)
             plt.show()
 
-compare_videos(True)
+compare_videos(True, 64)
