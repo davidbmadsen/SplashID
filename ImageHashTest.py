@@ -12,6 +12,7 @@ filename = 'testvid'
 
 if __name__ == "__main__":
 
-    vidurl = get_search('yee', 2)
-    #vidurl = ['https://youtu.be/q6EoRBvdVPQ']
-    split_into_frames(vidurl, height)
+    #vidurl = get_search('yee', 2)
+    source = ['https://www.youtube.com/watch?v=3_KUMt3DaDc','https://youtu.be/8zXfycWyoU0']
+    # compilation = ['https://youtu.be/8zXfycWyoU0']
+    split_into_frames(source, height)#

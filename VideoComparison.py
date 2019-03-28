@@ -2,14 +2,15 @@ from PIL import Image
 import imagehash
 import os
 import matplotlib.pyplot as plt
-import numpy as np
 import time
-
+import numpy as np
+from scipy.signal import savgol_filter
 
 def hash_frames(directory, hash_size=8):
     hash_list = []
     frames_list = os.listdir(directory)
     frames_tmp = []
+
     # Get frames and sort them
     for frame in frames_list:
         frames_tmp.append(int(frame[:-4]))
@@ -33,22 +34,25 @@ def hash_frames(directory, hash_size=8):
 
 
 def compare_frames(source_hashes, frame_hashes, hash_size):
+
     comparisons = []
     all_comparisons = []
-    print("[Frame compare] Comparing frames...")
+    print("[Frame compare] Finding most similar frame...")
     for i in range(len(source_hashes)):
         for j in range(len(frame_hashes)):
-            result = round((source_hashes[i] - frame_hashes[j])*100/(hash_size ** 2), 3)
+            result = round((source_hashes[i] - frame_hashes[j])/(hash_size ** 2), 5)
             comparisons.append(result)
+        all_comparisons.append(comparisons)
+        comparisons = []
 
-        all_comparisons.append(comparisons)     # Add to list of comparison vectors
-        comparisons = []                        # Clear comparisons for next comparison sequence
+    # Pick most similar frame based on hamming distance
+    most_similar_frame = min(all_comparisons)
     print("[Frame compare] Done.")
 
-    return all_comparisons
+    return most_similar_frame
 
 
-def compare_videos(show_plot=False,hash_size=8, scaling_factor=(1/4)):
+def compare_videos(show_plot=False, hash_size=8, scaling_factor=(1/4)):
 
     os.chdir('video')
 
@@ -63,23 +67,22 @@ def compare_videos(show_plot=False,hash_size=8, scaling_factor=(1/4)):
         print("[Video compare] Processing directory", directory)
 
         # Hash video frames
-        frame_hashes = hash_frames(directory,hash_size)
+        frame_hashes = hash_frames(directory, hash_size)
 
         # Compare all source frames against all video frames
-        all_comparisons = compare_frames(source_hashes, frame_hashes, hash_size)
-
-        # Find minimum value of each vector element in all subvectors
-        print("[Results] Getting minimum values...")
-        comparisons = np.array(all_comparisons)
-        for i in range(1, len(all_comparisons)):            # Goes through all comparison lists
-            comparisons = np.minimum(all_comparisons[i], all_comparisons[i-1])
-        print("[Results] Done.")
-        #for i in range(len(all_comparisons)):
-         #   comparisons *= all_comparisons[i]
-
+        most_similar_frame = compare_frames(source_hashes, frame_hashes, hash_size)
+        filtered_result = savgol_filter(most_similar_frame, 501, 6)
+        filtered_result_2 = savgol_filter(most_similar_frame, 15, 3)
+        avg_base = np.mean(most_similar_frame)
+        avg_savgol_1 = np.mean(filtered_result)
+        avg_savgol_2 = np.mean(filtered_result_2)
         if show_plot:
-            #plt.plot(yhat)
-            plt.plot(comparisons)
+            plt.plot(most_similar_frame)
+            plt.plot(filtered_result)
+            plt.plot(filtered_result_2)
+            plt.plot(avg_base)
+            plt.plot(avg_savgol_1)
+            plt.plot(avg_savgol_2)
             plt.show()
 
 compare_videos(True, 64)

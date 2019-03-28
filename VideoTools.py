@@ -41,15 +41,15 @@ def split_into_frames(url, height):
     for index, vid in enumerate(video_id):
         files = os.listdir('.')
 
-
         # Resize clip
+        resized_name = video_id[index][0:11] + '-resized.mp4'
         if resized_name not in files:
             clip = mp.VideoFileClip(video_id[index])
             clip_resized = clip.resize(height=height)
             clip_resized.write_videofile(video_id[index][0:11] + '-resized.mp4')
         else:
             print("Resized video already exists.")
-        resized_name = video_id[index][0:11] + '-resized.mp4'
+
         print("Splitting " + str(resized_name) + " into frames...")
 
         # Capture video
