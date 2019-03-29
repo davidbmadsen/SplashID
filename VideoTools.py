@@ -27,7 +27,7 @@ def split_into_frames(url, is_source=False):
     os.chdir(os.path.dirname(__file__) + '/video')
 
     # Download videos
-    opts = {'format': 'mp4',
+    opts = {'format': '18',
             'outtmpl': '%(id)s.mp4',
             'extractaudio': False}
 
@@ -37,6 +37,7 @@ def split_into_frames(url, is_source=False):
         for index, url in enumerate(url):
             info_dict.append(ydl.extract_info(url))
             video_id.append(info_dict[index].get("id", None) + '.mp4')
+
 
     for index, vid in enumerate(video_id):
 
