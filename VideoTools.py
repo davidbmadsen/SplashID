@@ -21,10 +21,10 @@ def get_search(qstring, results):
     return videolist[0:results]
 
 
-def split_into_frames(url, height):
+def split_into_frames(url, is_source=False):
 
     # Change directory to ./video/
-    os.chdir("video")
+    os.chdir(os.path.dirname(__file__) + '/video')
 
     # Download videos
     opts = {'format': 'mp4',
@@ -39,22 +39,15 @@ def split_into_frames(url, height):
             video_id.append(info_dict[index].get("id", None) + '.mp4')
 
     for index, vid in enumerate(video_id):
-        files = os.listdir('.')
 
-        # Resize clip
-        resized_name = video_id[index][0:11] + '-resized.mp4'
-        if resized_name not in files:
-            clip = mp.VideoFileClip(video_id[index])
-            clip_resized = clip.resize(height=height)
-            clip_resized.write_videofile(video_id[index][0:11] + '-resized.mp4')
-        else:
-            print("Resized video already exists.")
-
-        print("Splitting " + str(resized_name) + " into frames...")
+        print("Splitting " + str(vid) + " into frames...")
 
         # Capture video
-        cap = cv2.VideoCapture(resized_name)
-        framedir = "frames_" + str(index)
+        cap = cv2.VideoCapture(vid)
+        if is_source:
+            framedir = './assets/' + vid[0:11]
+        else:
+            framedir = './comparison/' + vid[0:11]
 
         try:
             if not os.path.exists(framedir):
@@ -62,12 +55,18 @@ def split_into_frames(url, height):
         except OSError:
             print('Error: Creating directory of data')
 
+        if len(os.listdir(framedir)) != 0:
+            print("Frames already created.")
+            break
+
         # Split capture into frames
         current_frame = 0
         while True:
             ret, frame = cap.read()
             if not ret:
+                print("Framesplit done.")
                 break
+            height = frame.shape[0]
             width = frame.shape[1]
             x = int((width - height) / 2)
 
