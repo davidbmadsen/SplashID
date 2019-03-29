@@ -3,7 +3,7 @@ def find_most_similar(list source_hashes,list frame_hashes, int hash_size):
     cdef int j
     cdef list comparisons = []
     cdef list all_comparisons = []
-
+    cdef int result
     for i in range(len(source_hashes)):
         for j in range(len(frame_hashes)):
             result = round((source_hashes[i] - frame_hashes[j])/(hash_size ** 2), 5)

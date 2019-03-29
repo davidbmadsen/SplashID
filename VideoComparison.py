@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import time
 import numpy as np
+import MostSimilarFrame
 from scipy.signal import savgol_filter
 
 
@@ -72,7 +73,10 @@ def compare_videos(source_id, show_plot=False, hash_size=8):
         frame_hashes = hash_frames('./comparison/' + directory, hash_size)
 
         # Compare all source frames against all video frames
-        most_similar_frame = compare_frames(source_hashes, frame_hashes, hash_size)
+        print("[Frame compare] Finding most similar frame...")
+        start_time = time.time()
+        most_similar_frame = MostSimilarFrame.find_most_similar(source_hashes, frame_hashes, hash_size)
+        print("[Frame compare] Done. Elapsed time:", round(time.time() - start_time, 3))
 
         # Filter out noise
         filtered_result = savgol_filter(most_similar_frame, 201, 6)
